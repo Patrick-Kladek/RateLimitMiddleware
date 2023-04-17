@@ -28,7 +28,7 @@ public struct RateLimitMiddleware: Middleware {
     ///     - next: Next `Responder` in the chain, potentially another middleware or the main router.
     /// - returns: An asynchronous `Response`.
     public func respond(to request: Request, chainingTo next: Responder) -> EventLoopFuture<Response> {
-        let id = (request.remoteAddress?.description ?? "") + request.url.description
+        let id = (request.peerAddress?.description ?? "") + request.url.description
         
         var peer = cache[key: id] ?? Peer(limit: limit, refreshInterval: interval)
         
@@ -45,7 +45,7 @@ public struct RateLimitMiddleware: Middleware {
             self.cache[key: id] = peer
             
             // Perform auto purge
-            purge: if autoPurge.canRun {
+            if autoPurge.canRun {
                 autoPurge.updateLastRun()
                 self.cache.all.filter {
                     $0.value.expired
